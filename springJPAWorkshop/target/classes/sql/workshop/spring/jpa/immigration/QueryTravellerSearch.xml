@@ -1,0 +1,541 @@
+<?xml version="1.0"?>
+<entity-mappings version="1.0" xmlns="http://java.sun.com/xml/ns/persistence/orm">
+	<named-native-query name="Traveller.countTravellerSearch">
+		<query>
+			SELECT 
+				SUM(total) value
+			FROM 
+				(
+					SELECT  
+						COUNT(TRAVEL_INFO_ID)total
+					FROM
+						((
+							SELECT 
+								SQ.TRAVEL_INFO_ID, SQ.TRANSACTION_DATETIME, TO_CHAR(SQ.TRANSACTION_DATETIME, 'DD/MM/YYYY HH24:MI:SS')TRANSACTION_DATETIME_FORMAT 
+								, SQ.STOPLIST_HIT_ID, SQ.STOPLIST_STATUS, SQ.M_OVER_STOPLIST
+								, SQ.BLACKLIST_HIT_ID, SQ.BLACKLIST_STATUS, SQ.M_OVER_BLACKLIST, SQ.TRAVELLER_TYPE, SQ.CONVERT_NAME
+								, SQ.FULLNAME, SQ.GENDER, SQ.NATIONALITY, SQ.NATIONALITY_NAME, SQ.BOARDING_STATUS, SQ.BOARDSTATUS_NAME
+								, SQ.JOURNEY_ID, SQ.DEPARTURE_PORT, SQ.ARRIVAL_PORT, SQ.DEP_DATETIME_ORIG, SQ.ARR_DATETIME_ORIG
+								, SQ.DEPARTURE_DATETIME, SQ.ARRIVAL_DATETIME
+								, SQ.SERVICE_NUMBER, SQ.CARRIER_CODE, SQ.CARRIER_NAME, SQ.FLIGHT_ROUTE, SQ.JOURNEY_TYPE, SQ.FLIGHT_DIRECTION
+								, SQ.JOURNEY_TRAVELLER, SQ.JOURNEY_TYPE_NAME    
+								, SQ.FLIGHT_STATUS_CODE, SQ.FLIGHT_STATUS_NAME
+								, SQ.ACTIVE, SQ.CREATE_DATE, SQ.CREATE_USER, SQ.CREATE_STATION
+								, SQ.UPDATE_DATE, SQ.UPDATE_USER, SQ.UPDATE_STATION
+								, SQ.DOB, SQ.DOC_NO			
+							FROM
+								(
+									SELECT DISTINCT 
+										TIF.TRAVEL_INFO_ID, (CASE WHEN TIF.CANCEL_DATE IS NULL THEN TIF.CREATE_DATE ELSE TIF.CANCEL_DATE END)TRANSACTION_DATETIME
+										, TIF.STOPLIST_HIT_ID, (CASE WHEN TIF.STOPLIST_HIT_ID IS NOT NULL THEN 1 ELSE NULL END) STOPLIST_STATUS, (CASE WHEN TIF.STOPLIST_HIT_ID IS NOT NULL THEN 'Stoplist' ELSE NULL END) M_OVER_STOPLIST
+										, TIF.BLACKLIST_HIT_ID, (CASE WHEN TIF.BLACKLIST_HIT_ID IS NOT NULL THEN 2 ELSE NULL END) BLACKLIST_STATUS, (CASE WHEN TIF.BLACKLIST_HIT_ID IS NOT NULL THEN 'Blacklist' ELSE NULL END) M_OVER_BLACKLIST
+										, TIF.TRAVELLER_TYPE, traType.CONVERT_NAME 
+										, TVL.FAMILY_NAME||', '||TVL.GIVEN_NAMES FULLNAME, TVL.GENDER
+										, TVL.NATIONALITY, NVL(SC.NATIONALITY_NAME_EN,'Unknown')NATIONALITY_NAME  
+										, TIF.BOARDING_STATUS, CG.GLOBAL_DATA_VALUE_EN BOARDSTATUS_NAME
+										, TIF.JOURNEY_ID, JRN.DEPARTURE_PORT, JRN.ARRIVAL_PORT
+										, JRN.DEP_DATETIME AS DEP_DATETIME_ORIG	
+										, JRN.ARR_DATETIME AS ARR_DATETIME_ORIG
+										, TO_CHAR(TO_DATE(UTC2THA_FUN(JRN.DEP_DATETIME) ,'YYYYMMDDHH24MISS'), 'DD/MM/YYYY HH24:MI') AS DEPARTURE_DATETIME
+										, TO_CHAR(TO_DATE(UTC2THA_FUN(JRN.ARR_DATETIME) ,'YYYYMMDDHH24MISS'), 'DD/MM/YYYY HH24:MI') AS ARRIVAL_DATETIME
+										, JRN.OPERATING_FLIGHT AS SERVICE_NUMBER		
+										, JRN.OPERATING_CARRIER_CODE AS CARRIER_CODE								
+										, NVL(SAL.AIRLINE_NAME_EN, 'Unknown')CARRIER_NAME    
+										, NVL(SA.LOCATION_NAME_EN,'Unknown') ||'-'||NVL(SA2.LOCATION_NAME_EN,'Unknown')FLIGHT_ROUTE
+										, JRN.JOURNEY_TYPE, CGD.GLOBAL_DATA_VALUE_EN FLIGHT_DIRECTION
+										, TIF.JOURNEY_TYPE JOURNEY_TRAVELLER, CGD2.GLOBAL_DATA_VALUE_EN JOURNEY_TYPE_NAME 
+										, (CASE WHEN JRN.ROUTE_ID IS NOT NULL THEN 
+											(
+												SELECT DISTINCT 
+													FFF.FLIGHT_STATUS 
+												FROM 
+													TRA_JOURNEY_INFO FFF 
+												WHERE 
+													FFF.LIST_NO = 1 AND FFF.ROUTE_ID = JRN.ROUTE_ID
+											) ELSE JIF.FLIGHT_STATUS 
+										END)FLIGHT_STATUS_CODE
+										, (CASE WHEN JRN.ROUTE_ID IS NOT NULL THEN 
+											(
+												SELECT DISTINCT 
+													CF.STATUS_NAME_EN 
+												FROM 
+													TRA_JOURNEY_INFO FFF, CON_FLIGHT_STATUS CF 
+												WHERE 
+													JRN.JOURNEY_TYPE = CF.JOURNEY_TYPE AND FFF.FLIGHT_STATUS = CF.FLIGHT_STATUS AND CF.ACTIVE = 'Y'
+													AND FFF.LIST_NO = 1 AND FFF.ROUTE_ID = JRN.ROUTE_ID
+											) ELSE FST.STATUS_NAME_EN 
+										END) FLIGHT_STATUS_NAME
+										, JRN.ACTIVE, JRN.CREATE_DATE, JRN.CREATE_USER, JRN.CREATE_STATION
+										, JRN.UPDATE_DATE, JRN.UPDATE_USER, JRN.UPDATE_STATION
+										, NVL(SUBSTR (TVL.BIRTH_DATE,7,2 ),'00') ||'/'|| NVL(SUBSTR (TVL.BIRTH_DATE,5,2 ),'00') ||'/'|| NVL(SUBSTR (TVL.BIRTH_DATE,1,4 ),'0000') AS DOB
+										, TDOC.DOC_NO	
+									FROM 
+										(( 
+											SELECT 
+												*
+											FROM 
+												TRA_TRAVEL_INFO TZ
+											WHERE 
+												TZ.ACTIVE = 'Y'
+												AND TZ.BOARDING_STATUS = 'E'
+												AND TZ.CREATE_DATE >= TO_DATE(:transactionDataStart||:transactionTimeStart, 'DD/MM/YYYY HH24:MI:SS') 
+												AND TO_DATE(:transactionDataEnd||:transactionTimeEnd, 'DD/MM/YYYY HH24:MI:SS') >= TZ.CREATE_DATE 
+												AND TZ.BOARDING_STATUS IN :boardingStatusList
+												AND TZ.JOURNEY_TYPE IN :journeyTypeList
+												AND TZ.JOURNEY_TYPE IS NOT NULL 
+												AND TZ.TRAVELLER_TYPE = :convertType
+												AND TZ.TRAVEL_INFO_ID IN (
+														SELECT 
+															DOC.TRAVEL_INFO_ID 
+														FROM 
+															TRA_TRAVEL_DOCUMENT DOC
+															INNER JOIN TRA_DOCUMENT TD ON DOC.DOCUMENT_ID = TD.DOCUMENT_ID 
+																AND TD.ACTIVE = 'Y' 
+																AND TD.DOCUMENT_TYPE = :documentType
+																AND TD.DOCUMENT_NO LIKE UPPER(:documentNo||'%') 
+													)
+												AND TZ.JOURNEY_ID IN (
+														SELECT 
+															JOURNEY_ID
+														FROM 
+															TRA_JOURNEY 
+														WHERE 
+															ACTIVE = 'Y' 
+															AND OPERATING_FLIGHT = :serviceNumber
+															AND JOURNEY_TYPE = :flightDirection
+															AND DEPARTURE_PORT = :departureAirport
+															AND ARRIVAL_PORT = :arrivalAirport
+															AND OPERATING_CARRIER_CODE = :carrierCode
+													)   		
+												AND TZ.JOURNEY_ID IN (
+														SELECT 
+															JOURNEY_ID
+														FROM 
+															TRA_JOURNEY 
+														WHERE  
+															ACTIVE = 'Y' 
+															AND DEP_DATETIME >= TO_CHAR(TO_DATE(:departureDateStart||:departureTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+															AND TO_CHAR(TO_DATE(:departureDateEnd||:departureTimeEnd ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= DEP_DATETIME	 
+													)    
+												 AND TZ.JOURNEY_ID IN (
+														SELECT 
+															JOURNEY_ID
+														FROM 
+															TRA_JOURNEY 
+														WHERE 
+															ACTIVE = 'Y'
+															AND ARR_DATETIME >= TO_CHAR(TO_DATE(:arrivalDataStart||:arrivalTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+															AND TO_CHAR(TO_DATE(:arrivalDataEnd||:arrivalTimeEnd,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= ARR_DATETIME	 
+													)   
+												AND TZ.TRAVELLER_ID IN (
+														SELECT 
+															TRAVELLER_ID
+														FROM 
+															TRA_TRAVELLER 
+														WHERE 
+															ACTIVE = 'Y' 
+															AND FAMILY_NAME LIKE UPPER(:surname||'%')
+															AND GIVEN_NAMES LIKE UPPER(:name||'%')
+															AND SUBSTR(BIRTH_DATE,1,4) = :yyyy
+															AND SUBSTR(BIRTH_DATE,5,2) = :mm
+															AND SUBSTR(BIRTH_DATE,7,2)  = :dd
+															AND GENDER = :gender
+															AND NATIONALITY = :nationalityCode
+													)    
+										) UNION ALL (
+											SELECT 
+												*
+										   FROM 
+												TRA_TRAVEL_INFO TY
+										   WHERE 
+												TY.ACTIVE = 'Y' 
+												AND TY.CANCEL_DATE >= TO_DATE(:transactionDataStart||:transactionTimeStart, 'DD/MM/YYYY HH24:MI:SS') 
+												AND TO_DATE(:transactionDataEnd||:transactionTimeEnd, 'DD/MM/YYYY HH24:MI:SS') >= TY.CANCEL_DATE 
+												AND TY.BOARDING_STATUS IN:boardingStatusList
+												AND TY.JOURNEY_TYPE IN :journeyTypeList
+												AND TY.JOURNEY_TYPE IS NOT NULL 
+												AND TY.TRAVELLER_TYPE = :convertType
+												AND TY.TRAVEL_INFO_ID IN (
+														SELECT 
+															DOC.TRAVEL_INFO_ID 
+														FROM 
+															TRA_TRAVEL_DOCUMENT DOC
+															INNER JOIN TRA_DOCUMENT TD ON DOC.DOCUMENT_ID = TD.DOCUMENT_ID 
+																AND TD.ACTIVE = 'Y' 
+																AND TD.DOCUMENT_TYPE = :documentType
+																AND TD.DOCUMENT_NO LIKE UPPER(:documentNo||'%') 
+													)
+												AND TY.JOURNEY_ID IN (
+														SELECT 
+															JOURNEY_ID
+														FROM 
+															TRA_JOURNEY 
+														WHERE 
+															ACTIVE = 'Y' 
+															AND OPERATING_FLIGHT = :serviceNumber
+															AND JOURNEY_TYPE = :flightDirection
+															AND DEPARTURE_PORT = :departureAirport
+															AND ARRIVAL_PORT = :arrivalAirport
+															AND OPERATING_CARRIER_CODE = :carrierCode
+													)   		
+												AND TY.JOURNEY_ID IN (
+														SELECT 
+															JOURNEY_ID
+														FROM 
+															TRA_JOURNEY 
+														WHERE  
+															ACTIVE = 'Y' 
+															AND DEP_DATETIME >= TO_CHAR(TO_DATE(:departureDateStart||:departureTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+															AND TO_CHAR(TO_DATE(:departureDateEnd||:departureTimeEnd ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= DEP_DATETIME	 
+													)    
+												 AND TY.JOURNEY_ID IN (
+														SELECT 
+															JOURNEY_ID
+														FROM 
+															TRA_JOURNEY 
+														WHERE 
+															ACTIVE = 'Y'
+															AND ARR_DATETIME >= TO_CHAR(TO_DATE(:arrivalDataStart||:arrivalTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+															AND TO_CHAR(TO_DATE(:arrivalDataEnd||:arrivalTimeEnd ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= ARR_DATETIME	 
+													)   
+												AND TY.TRAVELLER_ID IN (
+														SELECT 
+															TRAVELLER_ID
+														FROM 
+															TRA_TRAVELLER 
+														WHERE 
+															ACTIVE = 'Y' 
+															AND FAMILY_NAME LIKE UPPER(:surname||'%')
+															AND GIVEN_NAMES LIKE UPPER(:name||'%')
+															AND SUBSTR(BIRTH_DATE,1,4) = :yyyy
+															AND SUBSTR(BIRTH_DATE,5,2) = :mm
+															AND SUBSTR(BIRTH_DATE,7,2)  = :dd
+															AND GENDER = :gender
+															AND NATIONALITY = :nationalityCode
+													)    
+										)) TIF	
+										INNER JOIN CON_TRAVELLER_TYPE_V traType ON TIF.TRAVELLER_TYPE = traType.CONVERT_TYPE AND TIF.ACTIVE = 'Y'	
+										INNER JOIN TRA_TRAVELLER TVL ON TIF.TRAVELLER_ID = TVL.TRAVELLER_ID AND TVL.ACTIVE = 'Y'
+										LEFT OUTER JOIN STD_COUNTRY SC ON TVL.NATIONALITY = SC.NATIONALITY_CODE AND SC.ACTIVE = 'Y'
+										INNER JOIN CON_GLOBAL_DATA CG ON (TIF.BOARDING_STATUS = CG.GLOBAL_DATA_CODE AND CG.CON_GLOBAL_TYPE_ID = 47 AND CG.ACTIVE = 'Y' ) 
+										INNER JOIN TRA_JOURNEY JRN ON TIF.JOURNEY_ID = JRN.JOURNEY_ID AND JRN.ACTIVE = 'Y'
+										INNER JOIN TRA_JOURNEY_INFO JIF ON JRN.JOURNEY_ID = JIF.JOURNEY_ID AND JIF.ACTIVE = 'Y'
+										LEFT OUTER JOIN STD_AIRLINE SAL ON JRN.OPERATING_CARRIER_CODE = SAL.AIRLINE_CODE_IATA AND SAL.ACTIVE = 'Y'
+										INNER JOIN CON_GLOBAL_DATA CGD ON CGD.GLOBAL_DATA_CODE = JRN.JOURNEY_TYPE AND CGD.CON_GLOBAL_TYPE_ID = 50 AND CGD.ACTIVE = 'Y'
+										LEFT JOIN CON_FLIGHT_STATUS FST ON JRN.JOURNEY_TYPE = FST.JOURNEY_TYPE AND JIF.FLIGHT_STATUS = FST.FLIGHT_STATUS AND FST.ACTIVE = 'Y'
+										LEFT JOIN 
+											(SELECT ROW_NUMBER() OVER (PARTITION BY DOC.TRAVEL_INFO_ID ORDER BY CON.LIST_NO) AS ROW_NO
+															  , DOC.TRAVEL_INFO_ID
+															  , NVL2(TD.DOCUMENT_TYPE, TD.DOCUMENT_TYPE|| '/','')|| NVL(TD.DOCUMENT_NO,'') AS DOC_NO
+															  , TD.DOCUMENT_TYPE, TD.DOCUMENT_NO
+															  , TD.EXPIRY_DATE, TD.ISSUING_STATE, TD.IS_ENDORSEE
+																FROM TRA_TRAVEL_DOCUMENT DOC, TRA_DOCUMENT TD, CON_DOCUMENT_TYPE CON 
+																WHERE DOC.DOCUMENT_ID = TD.DOCUMENT_ID
+																AND CON.DOCUMENT_TYPE = TD.DOCUMENT_TYPE
+																AND TD.ACTIVE = 'Y' AND CON.ACTIVE = 'Y' 
+											) TDOC ON TDOC.TRAVEL_INFO_ID = TIF.TRAVEL_INFO_ID AND TDOC.ROW_NO = 1														
+										LEFT JOIN STD_AIRPORT SA ON SA.AIRPORT_CODE_IATA = JRN.DEPARTURE_PORT AND SA.ACTIVE = 'Y'
+										LEFT JOIN STD_AIRPORT SA2 ON SA2.AIRPORT_CODE_IATA = JRN.ARRIVAL_PORT AND SA2.ACTIVE = 'Y'
+										LEFT JOIN CON_GLOBAL_DATA CGD2 ON CGD2.GLOBAL_DATA_CODE = TIF.JOURNEY_TYPE AND CGD2.CON_GLOBAL_TYPE_ID = 50 AND CGD2.ACTIVE = 'Y'
+									WHERE 
+										TIF.ACTIVE = 'Y'
+										AND JRN.SITE_ID = :siteId
+										AND TVL.FAMILY_NAME LIKE UPPER(:surname||'%')	
+										AND TVL.GIVEN_NAMES LIKE UPPER(:name||'%')
+										AND TDOC.DOCUMENT_TYPE = :documentType	
+										AND TDOC.DOCUMENT_NO LIKE UPPER(:documentNo||'%') 	
+										AND TVL.NATIONALITY = :nationalityCode
+										AND TIF.TRAVELLER_TYPE = :convertType		
+										AND SUBSTR(TVL.BIRTH_DATE,1,4) = :yyyy
+										AND SUBSTR(TVL.BIRTH_DATE,5,2) = :mm
+										AND SUBSTR(TVL.BIRTH_DATE,7,2)  = :dd
+										AND TVL.GENDER = :gender
+										AND TIF.BOARDING_STATUS IN :boardingStatusList
+										AND JRN.OPERATING_FLIGHT = :serviceNumber
+										AND JRN.JOURNEY_TYPE = :flightDirection
+										AND JRN.DEPARTURE_PORT = :departureAirport
+										AND JRN.ARRIVAL_PORT = :arrivalAirport
+										AND JRN.OPERATING_CARRIER_CODE = :carrierCode
+										AND TIF.JOURNEY_TYPE  IN :journeyTypeList
+										AND TIF.JOURNEY_TYPE IS NOT NULL
+								)SQ
+							WHERE 
+								SQ.ACTIVE = 'Y'
+								AND SQ.STOPLIST_STATUS = :riskStatusStopList
+								AND SQ.BLACKLIST_STATUS = :riskStatusBlackList
+								AND SQ.FLIGHT_STATUS_CODE =  :flightStatus
+						)) RS
+				)		
+		</query>
+	</named-native-query>
+	
+	<named-native-query name="Traveller.getTravellerSearch">
+		<query>			
+			SELECT  
+				ROW_NUMBER () OVER(ORDER BY :orderBy) AS rowNo, RS.*
+			FROM
+				((
+					SELECT 
+						SQ.TRAVEL_INFO_ID AS travelInfoId, SQ.TRANSACTION_DATETIME AS transactionDatetime
+						, TO_CHAR(SQ.TRANSACTION_DATETIME, 'DD/MM/YYYY HH24:MI:SS') AS transactionDatetimeFormat
+						, SQ.STOPLIST_HIT_ID AS stopListHitId, SQ.STOPLIST_STATUS AS stopListStatus, SQ.M_OVER_STOPLIST AS mOverStopList
+						, SQ.BLACKLIST_HIT_ID AS blackListHitId, SQ.BLACKLIST_STATUS AS blackListStatus, SQ.M_OVER_BLACKLIST AS mOverBlackList
+						, SQ.TRAVELLER_TYPE AS travellerType, SQ.CONVERT_NAME AS convertName						 
+						, SQ.FULLNAME AS fullName, SQ.GENDER AS gender, SQ.NATIONALITY AS nationality, SQ.NATIONALITY_NAME AS nationalityName
+						, SQ.BOARDING_STATUS AS boardingStatus, SQ.BOARDSTATUS_NAME AS boardingStatusName
+						, SQ.JOURNEY_ID AS journeyId, SQ.DEPARTURE_PORT AS departurePort, SQ.ARRIVAL_PORT AS arrivalPort
+						, SQ.DEP_DATETIME_ORIG AS departureDatetimeOrig, SQ.ARR_DATETIME_ORIG AS arrivalDatetimeOrig
+						, SQ.DEPARTURE_DATETIME AS departureDatetime, SQ.ARRIVAL_DATETIME AS arrivalDatetime
+						, SQ.SERVICE_NUMBER AS serviceNumber, SQ.CARRIER_CODE AS cerrierCode, SQ.CARRIER_NAME AS cerrierName
+						, SQ.FLIGHT_ROUTE AS flightRoute, SQ.JOURNEY_TYPE AS journeyType, SQ.FLIGHT_DIRECTION AS flightDirection
+						, SQ.JOURNEY_TRAVELLER AS journeyTraveller, SQ.JOURNEY_TYPE_NAME AS journeyTypeName  
+						, SQ.FLIGHT_STATUS_CODE AS flightStatusCode, SQ.FLIGHT_STATUS_NAME AS flightStatusName
+						, SQ.ACTIVE AS active, SQ.CREATE_DATE AS createDate, SQ.CREATE_USER AS createUser, SQ.CREATE_STATION AS createStation
+						, SQ.UPDATE_DATE AS updateDate, SQ.UPDATE_USER AS updateUser, SQ.UPDATE_STATION AS updateStation
+						, SQ.DOB AS dob, SQ.DOC_NO AS docNo			
+					FROM
+						(
+							SELECT DISTINCT 
+								TIF.TRAVEL_INFO_ID, (CASE WHEN TIF.CANCEL_DATE IS NULL THEN TIF.CREATE_DATE ELSE TIF.CANCEL_DATE END)TRANSACTION_DATETIME
+								, TIF.STOPLIST_HIT_ID, (CASE WHEN TIF.STOPLIST_HIT_ID IS NOT NULL THEN 1 ELSE NULL END) STOPLIST_STATUS, (CASE WHEN TIF.STOPLIST_HIT_ID IS NOT NULL THEN 'Stoplist' ELSE NULL END) M_OVER_STOPLIST
+								, TIF.BLACKLIST_HIT_ID, (CASE WHEN TIF.BLACKLIST_HIT_ID IS NOT NULL THEN 2 ELSE NULL END) BLACKLIST_STATUS, (CASE WHEN TIF.BLACKLIST_HIT_ID IS NOT NULL THEN 'Blacklist' ELSE NULL END) M_OVER_BLACKLIST
+								, TIF.TRAVELLER_TYPE, traType.CONVERT_NAME 
+								, TVL.FAMILY_NAME||', '||TVL.GIVEN_NAMES FULLNAME, TVL.GENDER
+								, TVL.NATIONALITY, NVL(SC.NATIONALITY_NAME_EN,'Unknown')NATIONALITY_NAME  
+								, TIF.BOARDING_STATUS, CG.GLOBAL_DATA_VALUE_EN BOARDSTATUS_NAME
+								, TIF.JOURNEY_ID, JRN.DEPARTURE_PORT, JRN.ARRIVAL_PORT
+								, JRN.DEP_DATETIME AS DEP_DATETIME_ORIG	
+								, JRN.ARR_DATETIME AS ARR_DATETIME_ORIG
+								, TO_CHAR(TO_DATE(UTC2THA_FUN(JRN.DEP_DATETIME) ,'YYYYMMDDHH24MISS'), 'DD/MM/YYYY HH24:MI') AS DEPARTURE_DATETIME
+								, TO_CHAR(TO_DATE(UTC2THA_FUN(JRN.ARR_DATETIME) ,'YYYYMMDDHH24MISS'), 'DD/MM/YYYY HH24:MI') AS ARRIVAL_DATETIME
+								, JRN.OPERATING_FLIGHT AS SERVICE_NUMBER		
+								, JRN.OPERATING_CARRIER_CODE AS CARRIER_CODE								
+								, NVL(SAL.AIRLINE_NAME_EN, 'Unknown')CARRIER_NAME    
+								, NVL(SA.LOCATION_NAME_EN,'Unknown') ||'-'||NVL(SA2.LOCATION_NAME_EN,'Unknown')FLIGHT_ROUTE
+								, JRN.JOURNEY_TYPE, CGD.GLOBAL_DATA_VALUE_EN FLIGHT_DIRECTION
+								, TIF.JOURNEY_TYPE JOURNEY_TRAVELLER, CGD2.GLOBAL_DATA_VALUE_EN JOURNEY_TYPE_NAME 
+								, (CASE WHEN JRN.ROUTE_ID IS NOT NULL THEN 
+									(
+										SELECT DISTINCT 
+											FFF.FLIGHT_STATUS 
+										FROM 
+											TRA_JOURNEY_INFO FFF 
+										WHERE 
+											FFF.LIST_NO = 1 AND FFF.ROUTE_ID = JRN.ROUTE_ID
+									) ELSE JIF.FLIGHT_STATUS 
+								END)FLIGHT_STATUS_CODE
+								, (CASE WHEN JRN.ROUTE_ID IS NOT NULL THEN 
+									(
+										SELECT DISTINCT 
+											CF.STATUS_NAME_EN 
+										FROM 
+											TRA_JOURNEY_INFO FFF, CON_FLIGHT_STATUS CF 
+										WHERE 
+											JRN.JOURNEY_TYPE = CF.JOURNEY_TYPE AND FFF.FLIGHT_STATUS = CF.FLIGHT_STATUS AND CF.ACTIVE = 'Y'
+											AND FFF.LIST_NO = 1 AND FFF.ROUTE_ID = JRN.ROUTE_ID
+									) ELSE FST.STATUS_NAME_EN 
+								END) FLIGHT_STATUS_NAME
+								, JRN.ACTIVE, JRN.CREATE_DATE, JRN.CREATE_USER, JRN.CREATE_STATION
+								, JRN.UPDATE_DATE, JRN.UPDATE_USER, JRN.UPDATE_STATION
+								, NVL(SUBSTR (TVL.BIRTH_DATE,7,2 ),'00') ||'/'|| NVL(SUBSTR (TVL.BIRTH_DATE,5,2 ),'00') ||'/'|| NVL(SUBSTR (TVL.BIRTH_DATE,1,4 ),'0000') AS DOB
+								, TDOC.DOC_NO	
+							FROM 
+								(( 
+									SELECT 
+										*
+									FROM 
+										TRA_TRAVEL_INFO TZ
+									WHERE 
+										TZ.ACTIVE = 'Y'
+										AND TZ.BOARDING_STATUS = 'E'
+										AND TZ.CREATE_DATE >= TO_DATE(:transactionDataStart||:transactionTimeStart, 'DD/MM/YYYY HH24:MI:SS') 
+										AND TO_DATE(:transactionDataEnd||:transactionTimeEnd, 'DD/MM/YYYY HH24:MI:SS') >= TZ.CREATE_DATE 
+										AND TZ.BOARDING_STATUS IN :boardingStatusList
+										AND TZ.JOURNEY_TYPE IN :journeyTypeList
+										AND TZ.JOURNEY_TYPE IS NOT NULL 
+										AND TZ.TRAVELLER_TYPE = :convertType
+										AND TZ.TRAVEL_INFO_ID IN (
+												SELECT 
+													DOC.TRAVEL_INFO_ID 
+												FROM 
+													TRA_TRAVEL_DOCUMENT DOC
+													INNER JOIN TRA_DOCUMENT TD ON DOC.DOCUMENT_ID = TD.DOCUMENT_ID 
+														AND TD.ACTIVE = 'Y' 
+														AND TD.DOCUMENT_TYPE = :documentType
+														AND TD.DOCUMENT_NO LIKE UPPER(:documentNo||'%') 
+											)
+										AND TZ.JOURNEY_ID IN (
+												SELECT 
+													JOURNEY_ID
+												FROM 
+													TRA_JOURNEY 
+												WHERE 
+													ACTIVE = 'Y' 
+													AND OPERATING_FLIGHT = :serviceNumber
+													AND JOURNEY_TYPE = :flightDirection
+													AND DEPARTURE_PORT = :departureAirport
+													AND ARRIVAL_PORT = :arrivalAirport
+													AND OPERATING_CARRIER_CODE = :carrierCode
+											)   		
+										AND TZ.JOURNEY_ID IN (
+												SELECT 
+													JOURNEY_ID
+												FROM 
+													TRA_JOURNEY 
+												WHERE  
+													ACTIVE = 'Y' 
+													AND DEP_DATETIME >= TO_CHAR(TO_DATE(:departureDateStart||:departureTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+													AND TO_CHAR(TO_DATE(:departureDateEnd||:departureTimeEnd ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= DEP_DATETIME	 
+											)    
+										 AND TZ.JOURNEY_ID IN (
+												SELECT 
+													JOURNEY_ID
+												FROM 
+													TRA_JOURNEY 
+												WHERE 
+													ACTIVE = 'Y'
+													AND ARR_DATETIME >= TO_CHAR(TO_DATE(:arrivalDataStart||:arrivalTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+													AND TO_CHAR(TO_DATE(:arrivalDataEnd||:arrivalTimeEnd,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= ARR_DATETIME	 
+											)   
+										AND TZ.TRAVELLER_ID IN (
+												SELECT 
+													TRAVELLER_ID
+												FROM 
+													TRA_TRAVELLER 
+												WHERE 
+													ACTIVE = 'Y' 
+													AND FAMILY_NAME LIKE UPPER(:surname||'%')
+													AND GIVEN_NAMES LIKE UPPER(:name||'%')
+													AND SUBSTR(BIRTH_DATE,1,4) = :yyyy
+													AND SUBSTR(BIRTH_DATE,5,2) = :mm
+													AND SUBSTR(BIRTH_DATE,7,2)  = :dd
+													AND GENDER = :gender
+													AND NATIONALITY = :nationalityCode
+											)    
+								) UNION ALL (
+									SELECT 
+										*
+								   FROM 
+										TRA_TRAVEL_INFO TY
+								   WHERE 
+										TY.ACTIVE = 'Y' 
+										AND TY.CANCEL_DATE >= TO_DATE(:transactionDataStart||:transactionTimeStart, 'DD/MM/YYYY HH24:MI:SS') 
+										AND TO_DATE(:transactionDataEnd||:transactionTimeEnd, 'DD/MM/YYYY HH24:MI:SS') >= TY.CANCEL_DATE 
+										AND TY.BOARDING_STATUS IN:boardingStatusList
+										AND TY.JOURNEY_TYPE IN :journeyTypeList
+										AND TY.JOURNEY_TYPE IS NOT NULL 
+										AND TY.TRAVELLER_TYPE = :convertType
+										AND TY.TRAVEL_INFO_ID IN (
+												SELECT 
+													DOC.TRAVEL_INFO_ID 
+												FROM 
+													TRA_TRAVEL_DOCUMENT DOC
+													INNER JOIN TRA_DOCUMENT TD ON DOC.DOCUMENT_ID = TD.DOCUMENT_ID 
+														AND TD.ACTIVE = 'Y' 
+														AND TD.DOCUMENT_TYPE = :documentType
+														AND TD.DOCUMENT_NO LIKE UPPER(:documentNo||'%') 
+											)
+										AND TY.JOURNEY_ID IN (
+												SELECT 
+													JOURNEY_ID
+												FROM 
+													TRA_JOURNEY 
+												WHERE 
+													ACTIVE = 'Y' 
+													AND OPERATING_FLIGHT = :serviceNumber
+													AND JOURNEY_TYPE = :flightDirection
+													AND DEPARTURE_PORT = :departureAirport
+													AND ARRIVAL_PORT = :arrivalAirport
+													AND OPERATING_CARRIER_CODE = :carrierCode
+											)   		
+										AND TY.JOURNEY_ID IN (
+												SELECT 
+													JOURNEY_ID
+												FROM 
+													TRA_JOURNEY 
+												WHERE  
+													ACTIVE = 'Y' 
+													AND DEP_DATETIME >= TO_CHAR(TO_DATE(:departureDateStart||:departureTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+													AND TO_CHAR(TO_DATE(:departureDateEnd||:departureTimeEnd ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= DEP_DATETIME	 
+											)    
+										 AND TY.JOURNEY_ID IN (
+												SELECT 
+													JOURNEY_ID
+												FROM 
+													TRA_JOURNEY 
+												WHERE 
+													ACTIVE = 'Y'
+													AND ARR_DATETIME >= TO_CHAR(TO_DATE(:arrivalDataStart||:arrivalTimeStart ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS')    
+													AND TO_CHAR(TO_DATE(:arrivalDataEnd||:arrivalTimeEnd ,'YYYYMMDDHH24MISS') - (7/24) ,'YYYYMMDDHH24MISS') >= ARR_DATETIME	 
+											)   
+										AND TY.TRAVELLER_ID IN (
+												SELECT 
+													TRAVELLER_ID
+												FROM 
+													TRA_TRAVELLER 
+												WHERE 
+													ACTIVE = 'Y' 
+													AND FAMILY_NAME LIKE UPPER(:surname||'%')
+													AND GIVEN_NAMES LIKE UPPER(:name||'%')
+													AND SUBSTR(BIRTH_DATE,1,4) = :yyyy
+													AND SUBSTR(BIRTH_DATE,5,2) = :mm
+													AND SUBSTR(BIRTH_DATE,7,2)  = :dd
+													AND GENDER = :gender
+													AND NATIONALITY = :nationalityCode
+											)    
+								)) TIF	
+								INNER JOIN CON_TRAVELLER_TYPE_V traType ON TIF.TRAVELLER_TYPE = traType.CONVERT_TYPE AND TIF.ACTIVE = 'Y'	
+								INNER JOIN TRA_TRAVELLER TVL ON TIF.TRAVELLER_ID = TVL.TRAVELLER_ID AND TVL.ACTIVE = 'Y'
+								LEFT OUTER JOIN STD_COUNTRY SC ON TVL.NATIONALITY = SC.NATIONALITY_CODE AND SC.ACTIVE = 'Y'
+								INNER JOIN CON_GLOBAL_DATA CG ON (TIF.BOARDING_STATUS = CG.GLOBAL_DATA_CODE AND CG.CON_GLOBAL_TYPE_ID = 47 AND CG.ACTIVE = 'Y' ) 
+								INNER JOIN TRA_JOURNEY JRN ON TIF.JOURNEY_ID = JRN.JOURNEY_ID AND JRN.ACTIVE = 'Y'
+								INNER JOIN TRA_JOURNEY_INFO JIF ON JRN.JOURNEY_ID = JIF.JOURNEY_ID AND JIF.ACTIVE = 'Y'
+								LEFT OUTER JOIN STD_AIRLINE SAL ON JRN.OPERATING_CARRIER_CODE = SAL.AIRLINE_CODE_IATA AND SAL.ACTIVE = 'Y'
+								INNER JOIN CON_GLOBAL_DATA CGD ON CGD.GLOBAL_DATA_CODE = JRN.JOURNEY_TYPE AND CGD.CON_GLOBAL_TYPE_ID = 50 AND CGD.ACTIVE = 'Y'
+								LEFT JOIN CON_FLIGHT_STATUS FST ON JRN.JOURNEY_TYPE = FST.JOURNEY_TYPE AND JIF.FLIGHT_STATUS = FST.FLIGHT_STATUS AND FST.ACTIVE = 'Y'
+								LEFT JOIN 
+									(SELECT ROW_NUMBER() OVER (PARTITION BY DOC.TRAVEL_INFO_ID ORDER BY CON.LIST_NO) AS ROW_NO
+													  , DOC.TRAVEL_INFO_ID
+													  , NVL2(TD.DOCUMENT_TYPE, TD.DOCUMENT_TYPE|| '/','')|| NVL(TD.DOCUMENT_NO,'') AS DOC_NO
+													  , TD.DOCUMENT_TYPE, TD.DOCUMENT_NO
+													  , TD.EXPIRY_DATE, TD.ISSUING_STATE, TD.IS_ENDORSEE
+														FROM TRA_TRAVEL_DOCUMENT DOC, TRA_DOCUMENT TD, CON_DOCUMENT_TYPE CON 
+														WHERE DOC.DOCUMENT_ID = TD.DOCUMENT_ID
+														AND CON.DOCUMENT_TYPE = TD.DOCUMENT_TYPE
+														AND TD.ACTIVE = 'Y' AND CON.ACTIVE = 'Y' 
+									) TDOC ON TDOC.TRAVEL_INFO_ID = TIF.TRAVEL_INFO_ID AND TDOC.ROW_NO = 1														
+								LEFT JOIN STD_AIRPORT SA ON SA.AIRPORT_CODE_IATA = JRN.DEPARTURE_PORT AND SA.ACTIVE = 'Y'
+								LEFT JOIN STD_AIRPORT SA2 ON SA2.AIRPORT_CODE_IATA = JRN.ARRIVAL_PORT AND SA2.ACTIVE = 'Y'
+								LEFT JOIN CON_GLOBAL_DATA CGD2 ON CGD2.GLOBAL_DATA_CODE = TIF.JOURNEY_TYPE AND CGD2.CON_GLOBAL_TYPE_ID = 50 AND CGD2.ACTIVE = 'Y'
+							WHERE 
+								TIF.ACTIVE = 'Y'
+								AND JRN.SITE_ID = :siteId
+								AND TVL.FAMILY_NAME LIKE UPPER(:surname||'%')	
+								AND TVL.GIVEN_NAMES LIKE UPPER(:name||'%')
+								AND TDOC.DOCUMENT_TYPE = :documentType	
+								AND TDOC.DOCUMENT_NO LIKE UPPER(:documentNo||'%') 	
+								AND TVL.NATIONALITY = :nationalityCode
+								AND TIF.TRAVELLER_TYPE = :convertType		
+								AND SUBSTR(TVL.BIRTH_DATE,1,4) = :yyyy
+								AND SUBSTR(TVL.BIRTH_DATE,5,2) = :mm
+								AND SUBSTR(TVL.BIRTH_DATE,7,2)  = :dd
+								AND TVL.GENDER = :gender
+								AND TIF.BOARDING_STATUS IN :boardingStatusList
+								AND JRN.OPERATING_FLIGHT = :serviceNumber
+								AND JRN.JOURNEY_TYPE = :flightDirection
+								AND JRN.DEPARTURE_PORT = :departureAirport
+								AND JRN.ARRIVAL_PORT = :arrivalAirport
+								AND JRN.OPERATING_CARRIER_CODE = :carrierCode
+								AND TIF.JOURNEY_TYPE  IN :journeyTypeList
+								AND TIF.JOURNEY_TYPE IS NOT NULL
+						)SQ
+					WHERE 
+						SQ.ACTIVE = 'Y'
+						AND SQ.STOPLIST_STATUS = :riskStatusStopList
+						AND SQ.BLACKLIST_STATUS = :riskStatusBlackList
+						AND SQ.FLIGHT_STATUS_CODE =  :flightStatus
+				)) RS
+		</query>
+	</named-native-query>
+</entity-mappings>
+

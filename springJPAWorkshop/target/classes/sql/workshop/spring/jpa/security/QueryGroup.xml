@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="1.0" xmlns="http://java.sun.com/xml/ns/persistence/orm">
+
+	<named-query name="Group.deleteGroupOperatorBygroupId">
+		<query>DELETE GroupOperatorEntity o WHERE o.group.groupId = :groupId</query>
+	</named-query>
+	
+	<named-query name="Group.deleteGroupUserBygroupId">
+		<query>DELETE UserGroupEntity u WHERE u.group.groupId = :groupId</query>
+	</named-query>
+
+</entity-mappings>

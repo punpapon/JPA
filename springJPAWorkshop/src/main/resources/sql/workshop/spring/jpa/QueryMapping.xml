@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<entity-mappings version="1.0" xmlns="http://java.sun.com/xml/ns/persistence/orm">
+
+	<sql-result-set-mapping name="singleResult">
+		<column-result name="value"/>
+	</sql-result-set-mapping>
+	
+</entity-mappings>
