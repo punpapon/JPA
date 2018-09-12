@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="1.0" xmlns="http://java.sun.com/xml/ns/persistence/orm">
+
+	<named-query name="Station.getActiveStation">
+		<query>SELECT o FROM StationEntity o WHERE o.active = 'Y'</query>
+	</named-query>
+	
+	<named-query name="Location.getActiveLocation">
+		<query>SELECT o FROM LocationEntity o WHERE o.active = 'Y'</query>
+	</named-query>
+	
+</entity-mappings>

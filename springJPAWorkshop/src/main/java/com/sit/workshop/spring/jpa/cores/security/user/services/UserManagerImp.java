@@ -22,8 +22,7 @@ public class UserManagerImp implements UserManager{
 
 	@Override
 	public User addUser(User group) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return userService.addUser(group);
 	}
 
 	@Override

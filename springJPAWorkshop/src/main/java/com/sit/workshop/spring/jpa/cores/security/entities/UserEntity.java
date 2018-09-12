@@ -8,6 +8,7 @@ import org.apache.commons.lang3.builder.ToStringExclude;
 import com.sit.workshop.spring.jpa.cores.entities.DefaultActiveStationEntity;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -24,13 +25,10 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	@Id
 	@SequenceGenerator(name="SEC_USER_USERID_GENERATOR" , schema="APPS_TRAINING" , sequenceName="SEC_USER_SEQ" , allocationSize=1)
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="SEC_USER_USERID_GENERATOR")
-	@Column(name="USER_ID")
-	private long userId;
+	@Column(name = "USER_ID")
+	private Long userId;
 
-	private Character active;
 
-	private String answer;
-	
 	@OneToMany(mappedBy = "user"
 			, fetch = FetchType.LAZY
 			, cascade = CascadeType.ALL
@@ -44,142 +42,117 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 			, orphanRemoval = true)
 	@ToStringExclude
 	private List<UserGroupEntity> userGroups;
+	
+	@Column(name = "ANSWER")
+	private String answer;
 
-	@Column(name="CELL_PHONE_1")
+	@Column(name = "CELL_PHONE_1")
 	private String cellPhone1;
 
-	@Column(name="CELL_PHONE_2")
+	@Column(name = "CELL_PHONE_2")
 	private String cellPhone2;
 
-	@Column(name="CELL_PHONE_3")
+	@Column(name = "CELL_PHONE_3")
 	private String cellPhone3;
 
-	@Column(name="CHANGE_LOG")
+	@Column(name = "CHANGE_LOG")
 	private Character changeLog;
 
-	@Temporal(TemporalType.DATE)
-	@Column(name="CREATE_DATE")
-	private Date createDate;
-
-	@Column(name="CREATE_STATION")
-	private Long createStation;
-
-	@Column(name="CREATE_STATION_IP")
-	private String createStationIp;
-
-	@Column(name="CREATE_USER")
-	private Long createUser;
-
-	@Column(name="DOCTYPE_REF_USER")
+	@Column(name = "DOCTYPE_REF_USER")
 	private Character doctypeRefUser;
 
-	@Column(name="DOCTYPE_REF_USER_NO")
+	@Column(name = "DOCTYPE_REF_USER_NO")
 	private String doctypeRefUserNo;
 
+	@Column(name = "EMAIL")
 	private String email;
 
-	@Column(name="EMPLOYEE_CODE")
+	@Column(name = "EMPLOYEE_CODE")
 	private String employeeCode;
 
 	@Temporal(TemporalType.DATE)
-	@Column(name="END_DATE")
+	@Column(name = "END_DATE")
 	private Date endDate;
 
-	@Column(name="FORENAME_EN")
+	@Column(name = "FORENAME_EN")
 	private String forenameEn;
 
-	@Column(name="FORENAME_TH")
+	@Column(name = "FORENAME_TH")
 	private String forenameTh;
 
-	@Column(name="\"LANGUAGE\"")
+	@Column(name = "LANGUAGE")
 	private Character language;
 
 	@Temporal(TemporalType.DATE)
-	@Column(name="LOCK_DATE")
+	@Column(name = "LOCK_DATE")
 	private Date lockDate;
 
-	@Column(name="LOCK_STATUS")
+	@Column(name = "LOCK_STATUS")
 	private Character lockStatus;
 
-	@Column(name="ORGANIZATION_ID")
-	private Long organizationId;
+	@Column(name = "ORGANIZATION_ID")
+	private BigDecimal organizationId;
 
+	@Column(name = "PASS")
 	private String pass;
 
+	@Column(name = "PASSWORD")
 	private String password;
 
 	@Temporal(TemporalType.DATE)
-	@Column(name="PASSWORD_DATE")
+	@Column(name = "PASSWORD_DATE")
 	private Date passwordDate;
 
 	@Temporal(TemporalType.DATE)
-	@Column(name="PASSWORD_EXP")
+	@Column(name = "PASSWORD_EXP")
 	private Date passwordExp;
 
-	@Column(name="POSITION_NAME")
+	@Column(name = "POSITION_NAME")
 	private String positionName;
 
-	@Column(name="PREFIX_ID")
+	@Column(name = "PREFIX_ID")
 	private BigDecimal prefixId;
 
+	@Column(name = "QUESTION")
 	private Character question;
 
+	@Column(name = "REMARK")
 	private String remark;
 
-	@Column(name="RESET_PASSWORD_STATUS")
+	@Column(name = "RESET_PASSWORD_STATUS")
 	private Character resetPasswordStatus;
 
+	@Column(name = "SALT")
 	private String salt;
 
-	@Column(name="SITE_ID")
-	private Integer siteId;
-
 	@Temporal(TemporalType.DATE)
-	@Column(name="START_DATE")
+	@Column(name = "START_DATE")
 	private Date startDate;
 
-	@Column(name="SURNAME_EN")
+	@Column(name = "SURNAME_EN")
 	private String surnameEn;
 
-	@Column(name="SURNAME_TH")
+	@Column(name = "SURNAME_TH")
 	private String surnameTh;
 
-	@Temporal(TemporalType.DATE)
-	@Column(name="UPDATE_DATE")
-	private Date updateDate;
-
-	@Column(name="UPDATE_STATION")
-	private Long updateStation;
-
-	@Column(name="UPDATE_STATION_IP")
-	private String updateStationIp;
-
-	@Column(name="UPDATE_USER")
-	private Long updateUser;
-
+	@Column(name = "USERNAME")
 	private String username;
 
+
 	public UserEntity() {
+
 	}
 
-	public long getUserId() {
-		return this.userId;
+	public Long getUserId() {
+		return userId;
 	}
 
-	public void setUserId(long userId) {
+	public void setUserId(Long userId) {
 		this.userId = userId;
 	}
 
-	public Character getActive() {
-		return this.active;
-	}
-
-	public void setActive(Character active) {
-		this.active = active;
-	}
-
 	public String getAnswer() {
-		return this.answer;
+		return answer;
 	}
 
 	public void setAnswer(String answer) {
@@ -187,7 +160,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getCellPhone1() {
-		return this.cellPhone1;
+		return cellPhone1;
 	}
 
 	public void setCellPhone1(String cellPhone1) {
@@ -195,7 +168,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getCellPhone2() {
-		return this.cellPhone2;
+		return cellPhone2;
 	}
 
 	public void setCellPhone2(String cellPhone2) {
@@ -203,7 +176,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getCellPhone3() {
-		return this.cellPhone3;
+		return cellPhone3;
 	}
 
 	public void setCellPhone3(String cellPhone3) {
@@ -211,47 +184,15 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Character getChangeLog() {
-		return this.changeLog;
+		return changeLog;
 	}
 
 	public void setChangeLog(Character changeLog) {
 		this.changeLog = changeLog;
 	}
 
-	public Date getCreateDate() {
-		return this.createDate;
-	}
-
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
-	}
-
-	public Long getCreateStation() {
-		return this.createStation;
-	}
-
-	public void setCreateStation(Long createStation) {
-		this.createStation = createStation;
-	}
-
-	public String getCreateStationIp() {
-		return this.createStationIp;
-	}
-
-	public void setCreateStationIp(String createStationIp) {
-		this.createStationIp = createStationIp;
-	}
-
-	public Long getCreateUser() {
-		return this.createUser;
-	}
-
-	public void setCreateUser(Long createUser) {
-		this.createUser = createUser;
-	}
-
 	public Character getDoctypeRefUser() {
-		return this.doctypeRefUser;
+		return doctypeRefUser;
 	}
 
 	public void setDoctypeRefUser(Character doctypeRefUser) {
@@ -259,7 +200,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getDoctypeRefUserNo() {
-		return this.doctypeRefUserNo;
+		return doctypeRefUserNo;
 	}
 
 	public void setDoctypeRefUserNo(String doctypeRefUserNo) {
@@ -267,7 +208,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getEmail() {
-		return this.email;
+		return email;
 	}
 
 	public void setEmail(String email) {
@@ -275,7 +216,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getEmployeeCode() {
-		return this.employeeCode;
+		return employeeCode;
 	}
 
 	public void setEmployeeCode(String employeeCode) {
@@ -283,7 +224,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Date getEndDate() {
-		return this.endDate;
+		return endDate;
 	}
 
 	public void setEndDate(Date endDate) {
@@ -291,7 +232,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getForenameEn() {
-		return this.forenameEn;
+		return forenameEn;
 	}
 
 	public void setForenameEn(String forenameEn) {
@@ -299,7 +240,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getForenameTh() {
-		return this.forenameTh;
+		return forenameTh;
 	}
 
 	public void setForenameTh(String forenameTh) {
@@ -307,7 +248,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Character getLanguage() {
-		return this.language;
+		return language;
 	}
 
 	public void setLanguage(Character language) {
@@ -315,7 +256,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Date getLockDate() {
-		return this.lockDate;
+		return lockDate;
 	}
 
 	public void setLockDate(Date lockDate) {
@@ -323,23 +264,23 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Character getLockStatus() {
-		return this.lockStatus;
+		return lockStatus;
 	}
 
 	public void setLockStatus(Character lockStatus) {
 		this.lockStatus = lockStatus;
 	}
 
-	public Long getOrganizationId() {
-		return this.organizationId;
+	public BigDecimal getOrganizationId() {
+		return organizationId;
 	}
 
-	public void setOrganizationId(Long organizationId) {
+	public void setOrganizationId(BigDecimal organizationId) {
 		this.organizationId = organizationId;
 	}
 
 	public String getPass() {
-		return this.pass;
+		return pass;
 	}
 
 	public void setPass(String pass) {
@@ -347,7 +288,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getPassword() {
-		return this.password;
+		return password;
 	}
 
 	public void setPassword(String password) {
@@ -355,7 +296,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Date getPasswordDate() {
-		return this.passwordDate;
+		return passwordDate;
 	}
 
 	public void setPasswordDate(Date passwordDate) {
@@ -363,7 +304,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Date getPasswordExp() {
-		return this.passwordExp;
+		return passwordExp;
 	}
 
 	public void setPasswordExp(Date passwordExp) {
@@ -371,7 +312,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getPositionName() {
-		return this.positionName;
+		return positionName;
 	}
 
 	public void setPositionName(String positionName) {
@@ -379,7 +320,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public BigDecimal getPrefixId() {
-		return this.prefixId;
+		return prefixId;
 	}
 
 	public void setPrefixId(BigDecimal prefixId) {
@@ -387,7 +328,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Character getQuestion() {
-		return this.question;
+		return question;
 	}
 
 	public void setQuestion(Character question) {
@@ -395,7 +336,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getRemark() {
-		return this.remark;
+		return remark;
 	}
 
 	public void setRemark(String remark) {
@@ -403,7 +344,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public Character getResetPasswordStatus() {
-		return this.resetPasswordStatus;
+		return resetPasswordStatus;
 	}
 
 	public void setResetPasswordStatus(Character resetPasswordStatus) {
@@ -411,23 +352,15 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getSalt() {
-		return this.salt;
+		return salt;
 	}
 
 	public void setSalt(String salt) {
 		this.salt = salt;
 	}
 
-	public Integer getSiteId() {
-		return this.siteId;
-	}
-
-	public void setSiteId(Integer siteId) {
-		this.siteId = siteId;
-	}
-
 	public Date getStartDate() {
-		return this.startDate;
+		return startDate;
 	}
 
 	public void setStartDate(Date startDate) {
@@ -435,7 +368,7 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getSurnameEn() {
-		return this.surnameEn;
+		return surnameEn;
 	}
 
 	public void setSurnameEn(String surnameEn) {
@@ -443,47 +376,15 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 	}
 
 	public String getSurnameTh() {
-		return this.surnameTh;
+		return surnameTh;
 	}
 
 	public void setSurnameTh(String surnameTh) {
 		this.surnameTh = surnameTh;
 	}
 
-	public Date getUpdateDate() {
-		return this.updateDate;
-	}
-
-	public void setUpdateDate(Date updateDate) {
-		this.updateDate = updateDate;
-	}
-
-	public Long getUpdateStation() {
-		return this.updateStation;
-	}
-
-	public void setUpdateStation(Long updateStation) {
-		this.updateStation = updateStation;
-	}
-
-	public String getUpdateStationIp() {
-		return this.updateStationIp;
-	}
-
-	public void setUpdateStationIp(String updateStationIp) {
-		this.updateStationIp = updateStationIp;
-	}
-
-	public Long getUpdateUser() {
-		return this.updateUser;
-	}
-
-	public void setUpdateUser(Long updateUser) {
-		this.updateUser = updateUser;
-	}
-
 	public String getUsername() {
-		return this.username;
+		return username;
 	}
 
 	public void setUsername(String username) {
@@ -498,6 +399,15 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 		this.userOperators = userOperators;
 	}
 
+	public void addUserOperator(UserOperatorEntity userOperator) {
+		if (userOperators == null) {
+			userOperators = new ArrayList<UserOperatorEntity>();
+		}
+
+		userOperators.add(userOperator);
+		userOperator.setUser(this);
+	}
+
 	public List<UserGroupEntity> getUserGroups() {
 		return userGroups;
 	}
@@ -506,4 +416,12 @@ public class UserEntity extends DefaultActiveStationEntity implements Serializab
 		this.userGroups = userGroups;
 	}
 
+	public void addUserGroup(UserGroupEntity userGroup) {
+		if (userGroups == null) {
+			userGroups = new ArrayList<UserGroupEntity>();
+		}
+
+		userGroups.add(userGroup);
+		userGroup.setUser(this);
+	}
 }

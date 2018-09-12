@@ -60,7 +60,8 @@ public class DataAccessConfig {
 			String[] mappingResources = {
 				 	  "sql/workshop/spring/jpa/QueryMapping.xml" ,
 					  "sql/workshop/spring/jpa/security/QueryGroup.xml" ,
-					  "sql/workshop/spring/jpa/immigration/QueryTravellerSearch.xml"
+					  "sql/workshop/spring/jpa/immigration/QueryTravellerSearch.xml" ,
+					  "sql/workshop/spring/jpa/security/QueryStation.xml"
 			};
 			factoryBean.setMappingResources(mappingResources);
 			

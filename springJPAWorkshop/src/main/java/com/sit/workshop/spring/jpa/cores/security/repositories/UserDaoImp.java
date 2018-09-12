@@ -37,7 +37,12 @@ public class UserDaoImp implements UserDao{
 		// TODO Auto-generated method stub
 		
 	}
-
+	@Override
+	public UserEntity add(UserEntity user) {
+		entityManager.persist(user);
+		return user;
+	}
+	
 	@Override
 	public void addUserOperatorByUser(UserEntity user) {
 		List<UserOperatorEntity> list = user.getUserOperators();

@@ -32,56 +32,9 @@ public class UserOperatorEntity extends DefaultAssociationEntity implements Seri
 	@ToStringExclude
 	private OperatorEntity operator;
 
-	
-	@Temporal(TemporalType.DATE)
-	@Column(name="CREATE_DATE")
-	private Date createDate;
-
-	@Column(name="CREATE_STATION")
-	private Long createStation;
-
-	@Column(name="CREATE_STATION_IP")
-	private String createStationIp;
-
-	@Column(name="CREATE_USER")
-	private Long createUser;
 
 	public UserOperatorEntity() {
 	}
-
-
-	public Date getCreateDate() {
-		return this.createDate;
-	}
-
-	public void setCreateDate(Date createDate) {
-		this.createDate = createDate;
-	}
-
-	public Long getCreateStation() {
-		return this.createStation;
-	}
-
-	public void setCreateStation(Long createStation) {
-		this.createStation = createStation;
-	}
-
-	public String getCreateStationIp() {
-		return this.createStationIp;
-	}
-
-	public void setCreateStationIp(String createStationIp) {
-		this.createStationIp = createStationIp;
-	}
-
-	public Long getCreateUser() {
-		return this.createUser;
-	}
-
-	public void setCreateUser(Long createUser) {
-		this.createUser = createUser;
-	}
-
 
 	public UserEntity getUser() {
 		return user;

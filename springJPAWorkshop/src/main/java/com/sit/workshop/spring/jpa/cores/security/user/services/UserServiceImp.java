@@ -1,5 +1,6 @@
 package com.sit.workshop.spring.jpa.cores.security.user.services;
 
+import java.util.Calendar;
 import java.util.List;
 
 import org.apache.commons.beanutils.BeanUtils;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.sit.commons.CommonDao;
+import com.sit.workshop.spring.jpa.cores.security.entities.GroupEntity;
 import com.sit.workshop.spring.jpa.cores.security.entities.OperatorEntity;
 import com.sit.workshop.spring.jpa.cores.security.entities.UserEntity;
 import com.sit.workshop.spring.jpa.cores.security.entities.UserGroupEntity;
@@ -36,9 +38,11 @@ public class UserServiceImp implements UserService{
 	
 	@Override
 	public User getUserById(Long id) throws Exception {
-		User user = new User();
+		
+		User user = null;
 		UserEntity userEntity = userDao.findById(id);
 		if (userEntity != null) {
+			user = new User();
 			BeanUtils.copyProperties(user, userEntity);
 			
 			// Operator
@@ -72,8 +76,54 @@ public class UserServiceImp implements UserService{
 
 	@Override
 	public User addUser(User user) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		if (user == null) {
+			throw new Exception("No object");
+		}
+
+		UserEntity userEntity = new UserEntity();
+		BeanUtils.copyProperties(userEntity, user);
+
+		// Salt and Password
+		String password = user.getPassword();
+		String salt = "XXXXX";
+		String passwordEncry = "XXXXXX";
+		userEntity.setPass(passwordEncry);
+		userEntity.setSalt(salt);
+		userEntity.setPasswordDate(Calendar.getInstance().getTime());
+		userEntity.setLockStatus('1');
+		
+
+		List<Operator> operators = user.getOperators();
+		if (operators != null && !operators.isEmpty()) {
+			// Insert new UserOperator data
+			for (Operator operator : operators) {
+				OperatorEntity operatorEntity = operatorDao.findById(operator.getOperatorId());
+
+				UserOperatorEntity userOperator = new UserOperatorEntity();
+				userOperator.setUser(userEntity);
+				userOperator.setOperator(operatorEntity);
+				userEntity.addUserOperator(userOperator);
+			}
+		}
+
+		List<Group> groups = user.getGroups();
+		if (groups != null && !groups.isEmpty()) {
+			// Insert new UserGroup data
+			for (Group group : groups) {
+				GroupEntity groupEntity = groupDao.findById(group.getGroupId());
+
+				UserGroupEntity userGroup = new UserGroupEntity();
+				userGroup.setUser(userEntity);
+				userGroup.setGroup(groupEntity);
+				userEntity.addUserGroup(userGroup);
+			}
+		}
+
+		// Insert User
+		userEntity = userDao.add(userEntity);
+		BeanUtils.copyProperties(user, userEntity);
+
+		return user;
 	}
 
 	@Override
