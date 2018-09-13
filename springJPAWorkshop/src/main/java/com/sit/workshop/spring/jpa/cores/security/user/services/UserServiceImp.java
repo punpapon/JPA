@@ -2,6 +2,7 @@ package com.sit.workshop.spring.jpa.cores.security.user.services;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ public class UserServiceImp implements UserService{
 		if (userEntity != null) {
 			user = new User();
 			BeanUtils.copyProperties(user, userEntity);
+			user.setPasswordDate(userEntity.getPasswordDate());
 			
 			// Operator
 						List<UserOperatorEntity> userOperatorList = userEntity.getUserOperators();
@@ -89,7 +91,7 @@ public class UserServiceImp implements UserService{
 		String passwordEncry = "XXXXXX";
 		userEntity.setPass(passwordEncry);
 		userEntity.setSalt(salt);
-		userEntity.setPasswordDate(Calendar.getInstance().getTime());
+		userEntity.setPasswordDate(Calendar.getInstance(Locale.ENGLISH).getTime());
 		userEntity.setLockStatus('1');
 		
 
@@ -128,13 +130,107 @@ public class UserServiceImp implements UserService{
 
 	@Override
 	public User updateUser(User user) throws Exception {
-		// TODO Auto-generated method stub
+		if(user == null) {
+			throw new Exception("No Object");
+		}
+		
+		Long id = user.getUserId();
+		if (id == null) {
+			throw new Exception("No object identification");
+		}
+		try {
+			UserEntity userEntity = userDao.findById(id);
+			BeanUtils.copyProperties(userEntity, user);
+			
+			String password = user.getPassword();
+			if (password != null) {
+				String salt = "XXXXX";
+				String passwordEncry = "XXXXX";
+				userEntity.setPass(passwordEncry);
+				userEntity.setSalt(salt);
+				userEntity.setPasswordDate(Calendar.getInstance().getTime());
+			}
+			
+			userEntity = userDao.update(userEntity);
+			
+					// Operator
+						List<Operator> operators = user.getOperators();
+						if (operators != null && !operators.isEmpty()) {
+
+							// Delete old data
+							List<UserOperatorEntity> oldUserOperatorList = userEntity.getUserOperators();
+							if (oldUserOperatorList.size() > 0) {
+
+								// Delete Old Data
+								userDao.deleteUserOperatorByUser(userEntity);
+
+								// Refresh
+								userEntity = userDao.findById(id);
+							}
+
+							// Insert new data
+							for (Operator operator : operators) {
+								OperatorEntity operatorEntity = operatorDao.findById(operator.getOperatorId());
+
+								UserOperatorEntity userOperator = new UserOperatorEntity();
+								userOperator.setUser(userEntity);
+								userOperator.setOperator(operatorEntity);
+								userEntity.addUserOperator(userOperator);
+							}
+
+							// Insert new data
+							userDao.addUserOperatorByUser(userEntity);
+						}
+
+						// Group
+						List<Group> groups = user.getGroups();
+						if (groups != null && !groups.isEmpty()) {
+
+							// Delete old data
+							List<UserGroupEntity> oldUserGroupList = userEntity.getUserGroups();
+							if (oldUserGroupList.size() > 0) {
+
+								// Delete Old Data
+								userDao.deleteUserGroupByUser(userEntity);
+
+								// Refresh
+								userEntity = userDao.findById(id);
+							}
+
+							// Insert new data
+							for (Group group : groups) {
+								GroupEntity groupEntity = groupDao.findById(group.getGroupId());
+
+								UserGroupEntity userGroup = new UserGroupEntity();
+								userGroup.setUser(userEntity);
+								userGroup.setGroup(groupEntity);
+								userEntity.addUserGroup(userGroup);
+							}
+
+							// Insert new data
+							userDao.addUserGroupByUser(userEntity);
+						}
+			
+		} catch (Exception e) {
+			throw new Exception("Not found");
+		}
+	
 		return null;
 	}
 
 	@Override
 	public void deleteUser(User user) throws Exception {
-		// TODO Auto-generated method stub
+		if(user == null) {
+			throw new Exception("No Object");
+		}
+		
+		Long id = user.getUserId();
+		if(id == null) {
+			throw new Exception("No UserId");
+		}
+		
+		UserEntity userEntity = userDao.findById(id);
+		userDao.delete(userEntity);
 		
 	}
 

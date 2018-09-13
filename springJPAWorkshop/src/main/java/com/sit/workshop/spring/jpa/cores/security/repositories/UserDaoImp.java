@@ -44,6 +44,17 @@ public class UserDaoImp implements UserDao{
 	}
 	
 	@Override
+	public UserEntity update(UserEntity user) {
+		entityManager.merge(user);
+		return user;
+	}
+	
+	@Override
+	public void delete(UserEntity user) {
+		entityManager.remove(user);
+	}
+	
+	@Override
 	public void addUserOperatorByUser(UserEntity user) {
 		List<UserOperatorEntity> list = user.getUserOperators();
 		if(list != null) {

@@ -27,13 +27,12 @@ public class UserManagerImp implements UserManager{
 
 	@Override
 	public User updateUser(User group) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return userService.updateUser(group);
 	}
 
 	@Override
 	public void deleteUser(User group) throws Exception {
-		// TODO Auto-generated method stub
+		userService.deleteUser(group);
 		
 	}
 

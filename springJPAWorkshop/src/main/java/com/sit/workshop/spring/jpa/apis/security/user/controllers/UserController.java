@@ -8,9 +8,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.Errors;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -68,4 +70,44 @@ public class UserController {
 		
 		return response;
 	}
+	
+	@PutMapping
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public ResponseEntity updataUser(@Valid @RequestBody User user, Errors errors) {
+		if (errors.hasErrors()) {
+			ResponseEntity response = ResponseEntity.badRequest().body("Had Errors.");
+			return response;			
+		}
+			
+		ResponseEntity response = null;
+		try {
+			user = userManager.updateUser(user);
+			response = ResponseEntity.ok(user);
+			
+		} catch (Exception e) {
+			response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+			e.printStackTrace();	
+		}
+		
+		return response;
+	}
+	
+	@DeleteMapping
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	public ResponseEntity deleteUser(@RequestBody User user) {
+	
+		ResponseEntity response = null;
+		try {
+			userManager.deleteUser(user);
+			response = ResponseEntity.ok("Delete success.");
+			
+		} catch (Exception e) {
+			response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+			e.printStackTrace();	
+		}
+		
+		return response;
+	}
+
+
 }

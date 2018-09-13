@@ -17,8 +17,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @Configuration
 @EnableWebMvc
 @ComponentScans(value = {
-		  @ComponentScan("com.sit.workshop.spring.jpa.apis.security")
-		, @ComponentScan("com.sit.workshop.spring.jpa.apis.immigration")
+		  @ComponentScan(basePackages = "com.sit.workshop.spring.jpa.apis.security")
+		, @ComponentScan(basePackages ="com.sit.workshop.spring.jpa.apis.immigration")
 })
 public class RESTfulAppConfig implements WebMvcConfigurer {
 

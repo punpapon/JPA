@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -47,6 +49,9 @@ public class User {
 	private Date startDate;
 	private Date endDate;
 	private String remark;
+	
+	@Temporal(TemporalType.DATE)
+	private Date passwordDate;
 	
 	@NotNull
 	private Character active;
@@ -263,5 +268,13 @@ public class User {
 	@Override
 	public String toString() {
 		return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+	}
+
+	public Date getPasswordDate() {
+		return passwordDate;
+	}
+
+	public void setPasswordDate(Date passwordDate) {
+		this.passwordDate = passwordDate;
 	}
 }
